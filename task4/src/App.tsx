@@ -1,8 +1,19 @@
 import React from 'react';
 import './App.css';
+import SignUp from './SignUp/SignUp';
+import SignIn from './SignIn/SignIn';
 
-function App() {
-  return <div className="App"></div>;
+class App extends React.Component<unknown, unknown> {
+  constructor(props: unknown) {
+    super(props);
+  }
+  render() {
+    return (
+      <div className="App">
+        <SignIn />
+      </div>
+    );
+  }
 }
 
 export default App;
