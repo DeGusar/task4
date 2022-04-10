@@ -12,7 +12,9 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 
-export default function SignIn() {
+export default function SignIn(props: {
+  handleClickLink: React.MouseEventHandler<HTMLAnchorElement>;
+}) {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -21,7 +23,6 @@ export default function SignIn() {
       password: data.get('password'),
     });
   };
-
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -69,7 +70,7 @@ export default function SignIn() {
           </Button>
           <Grid container justifyContent="flex-end">
             <Grid item>
-              <Link href="#" variant="body2">
+              <Link href="#" variant="body2" onClick={props.handleClickLink}>
                 {"Don't have an account? Sign Up"}
               </Link>
             </Grid>
