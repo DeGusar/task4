@@ -1,4 +1,6 @@
 import { Button, Container, Box } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import React from 'react';
 
 type ControlBarType = {
@@ -23,10 +25,20 @@ export function ControlBar({
         <Button variant="contained" onClick={handleClickBlock}>
           Block
         </Button>
-        <Button sx={{ ml: 1 }} variant="contained" onClick={handleClickUnblock}>
+        <Button
+          sx={{ ml: 1 }}
+          variant="contained"
+          onClick={handleClickUnblock}
+          startIcon={<SettingsBackupRestoreIcon />}
+        >
           Unblock
         </Button>
-        <Button sx={{ ml: 1 }} variant="contained" onClick={handleClickDelete}>
+        <Button
+          sx={{ ml: 1 }}
+          variant="contained"
+          startIcon={<DeleteIcon />}
+          onClick={handleClickDelete}
+        >
           Delete
         </Button>
       </Box>

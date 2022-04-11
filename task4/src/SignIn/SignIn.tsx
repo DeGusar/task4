@@ -33,8 +33,7 @@ export default function SignIn(props: {
         password: password,
       });
       if (response.status === 200) {
-        console.log(response.data.token);
-        saveToLocalStorage(response.data.token);
+        saveToLocalStorage(response.data.token, email);
         props.handleSubmitSignIn();
       }
     } catch (e) {

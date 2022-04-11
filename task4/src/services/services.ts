@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { RequestLoginType } from '../types/types';
 
-/* const url = 'https://task4-authorization.herokuapp.com/auth'; */
-const url = 'http://localhost:5000/auth';
+const url = 'https://task4-authorization.herokuapp.com/auth';
 export type requestSignUpType = {
   firstName: string;
   lastName: string;
@@ -11,6 +10,11 @@ export type requestSignUpType = {
 };
 export function createUser(bodyObject: requestSignUpType) {
   return axios.post(`${url}/registration`, {
+    ...bodyObject,
+  });
+}
+export function genereateUsers(bodyObject: requestSignUpType[]) {
+  return axios.post(`${url}/create`, {
     ...bodyObject,
   });
 }

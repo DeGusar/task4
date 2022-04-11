@@ -1,5 +1,4 @@
 import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 import SignUp from './SignUp/SignUp';
 import SignIn from './SignIn/SignIn';
@@ -9,12 +8,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import { ControlBar } from './ControlsBar/ControlsBar';
 import { columns } from './Table/columns';
 import { AppStateType } from './types/types';
-import {
-  randomCreatedDate,
-  randomTraderName,
-  randomEmail,
-  randomUpdatedDate,
-} from '@mui/x-data-grid-generator';
+import { randomTraderName, randomEmail, randomInt } from '@mui/x-data-grid-generator';
 
 import {
   Snack,
@@ -24,7 +18,13 @@ import {
   SnackUnban,
   SnackDelete,
 } from './Snack/Snack';
-import { blockUsers, deleteUsers, getUsers, unblockUsers } from './services/services';
+import {
+  blockUsers,
+  deleteUsers,
+  genereateUsers,
+  getUsers,
+  unblockUsers,
+} from './services/services';
 class App extends React.Component<unknown, AppStateType> {
   constructor(props: unknown) {
     super(props);
@@ -40,6 +40,7 @@ class App extends React.Component<unknown, AppStateType> {
       snackBan: false,
       snackUnban: false,
       snackDelete: false,
+      emailUser: localStorage.getItem('email'),
       users: [],
       selectedIds: [],
     };
@@ -60,9 +61,9 @@ class App extends React.Component<unknown, AppStateType> {
   signInSubmit = async () => {
     try {
       const response = await getUsers();
-      console.log(response.data);
       this.setState({
         users: [...response.data],
+        emailUser: localStorage.getItem('email'),
       });
     } catch (e) {
       const {
@@ -193,24 +194,21 @@ class App extends React.Component<unknown, AppStateType> {
   handleClickAdd = () => {
     this.generateUser();
   };
-  generateUser = () => {
+  generateUser = async () => {
     const array = new Array(10).fill({});
     const result = array.reduce((acum) => {
       return acum.concat({
-        id: uuidv4(),
         firstName: randomTraderName().split(' ').splice(0, 1).join(''),
         lastName: randomTraderName().split(' ').splice(1, 1).join(''),
         email: randomEmail(),
-        age: Math.floor(Math.random() * 80),
-        registration: randomCreatedDate(),
-        lastVisit: randomUpdatedDate(),
-        status: 'Active',
+        password: randomInt(10000, 1000000),
       });
     }, []);
+    await genereateUsers(result);
+    const usersData = await getUsers();
     this.setState({
-      users: [...this.state.users, ...result],
+      users: [...usersData.data],
     });
-    console.log(JSON.stringify(this.state.users));
   };
   render() {
     return (
@@ -219,6 +217,7 @@ class App extends React.Component<unknown, AppStateType> {
           isAuthorised={this.state.isAuthorised}
           handleLogin={this.handleLogin}
           handleLogout={this.handleLogout}
+          userEmail={`user: ${this.state.emailUser}`}
         />
         {this.state.showLoginPopUp && (
           <>
@@ -252,7 +251,7 @@ class App extends React.Component<unknown, AppStateType> {
                   LoadingOverlay: LinearProgress,
                 }}
                 loading={this.state.isLoading}
-                pageSize={40}
+                pageSize={10}
                 getRowId={(row) => row._id}
                 autoHeight={true}
                 rowsPerPageOptions={[10]}

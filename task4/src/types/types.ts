@@ -20,7 +20,15 @@ export type AppStateType = {
   snackUnban: boolean;
   snackDelete: boolean;
   users: UsersType[];
+  emailUser: string | null;
 };
+export type HeaderPropsType = {
+  isAuthorised: boolean;
+  handleLogout: React.MouseEventHandler<HTMLButtonElement>;
+  handleLogin: React.MouseEventHandler<HTMLButtonElement>;
+  userEmail: string;
+};
+
 export type UsersType = {
   _id: number;
   id: number;
