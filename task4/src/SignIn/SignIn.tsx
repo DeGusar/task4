@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -11,18 +11,47 @@ import Box from '@mui/material/Box';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
+import { login } from '../services/services';
+import { saveToLocalStorage } from '../localStorage/localStorage';
 
 export default function SignIn(props: {
   handleClickLink: React.MouseEventHandler<HTMLAnchorElement>;
+  handleSubmitSignIn: () => void;
 }) {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const [isPasswordError, setPasswordError] = useState(false);
+  const [isEmailError, setEmailError] = useState(false);
+  const [textPasswordError, setTextPasswordError] = useState('');
+  const [textEmailError, setTextEmailError] = useState('');
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    const email = '' + data.get('email');
+    const password = '' + data.get('password');
+    try {
+      const response = await login({
+        email: email,
+        password: password,
+      });
+      if (response.status === 200) {
+        console.log(response.data.token);
+        saveToLocalStorage(response.data.token);
+        props.handleSubmitSignIn();
+      }
+    } catch (e) {
+      const {
+        response: { status },
+      } = e;
+      if (status === 401) {
+        setEmailError(true);
+        setTextEmailError('User with this email not found');
+      }
+      if (status === 402) {
+        setPasswordError(true);
+        setTextPasswordError('Wrong password');
+      }
+    }
   };
+
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -46,10 +75,20 @@ export default function SignIn(props: {
             required
             fullWidth
             id="email"
+            error={isEmailError}
+            helperText={textEmailError}
             label="Email Address"
             name="email"
             autoComplete="email"
             autoFocus
+            onBlur={() => {
+              setEmailError(false);
+              setTextEmailError('');
+            }}
+            onChange={() => {
+              setEmailError(false);
+              setTextEmailError('');
+            }}
           />
           <TextField
             margin="normal"
@@ -57,9 +96,19 @@ export default function SignIn(props: {
             fullWidth
             name="password"
             label="Password"
+            error={isPasswordError}
+            helperText={textPasswordError}
             type="password"
             id="password"
             autoComplete="current-password"
+            onBlur={() => {
+              setPasswordError(false);
+              setTextPasswordError('');
+            }}
+            onChange={() => {
+              setPasswordError(false);
+              setTextPasswordError('');
+            }}
           />
           <FormControlLabel
             control={<Checkbox value="remember" color="primary" />}

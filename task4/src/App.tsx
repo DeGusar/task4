@@ -7,38 +7,81 @@ import { Header } from './Header/Header';
 import { DataGrid } from '@mui/x-data-grid';
 import LinearProgress from '@mui/material/LinearProgress';
 import { ControlBar } from './ControlsBar/ControlsBar';
-import { columns } from './Table/Table';
+import { columns } from './Table/columns';
+import { AppStateType } from './types/types';
 import {
   randomCreatedDate,
   randomTraderName,
   randomEmail,
   randomUpdatedDate,
 } from '@mui/x-data-grid-generator';
-import { UsersType } from './Table/Table';
 
-type AppStateType = {
-  isAuthorised: boolean;
-  showLoginPopUp: boolean;
-  showLogin: boolean;
-  showSignin: boolean;
-  isLoading: boolean;
-  users: UsersType[];
-};
+import {
+  Snack,
+  SnackBan,
+  SnackBlocked,
+  SnackLoginYes,
+  SnackUnban,
+  SnackDelete,
+} from './Snack/Snack';
+import { blockUsers, deleteUsers, getUsers, unblockUsers } from './services/services';
 class App extends React.Component<unknown, AppStateType> {
   constructor(props: unknown) {
     super(props);
     this.state = {
-      isAuthorised: true,
+      isAuthorised: localStorage.getItem('apiKey') ? true : false,
       showLoginPopUp: false,
       showLogin: true,
       showSignin: false,
       isLoading: false,
+      snackSuccessfullRegistration: false,
+      snackSuccessfullLogin: false,
+      snackBlocked: false,
+      snackBan: false,
+      snackUnban: false,
+      snackDelete: false,
       users: [],
+      selectedIds: [],
     };
   }
-  componentDidMount() {
-    this.generateUser();
+  async componentDidMount() {
+    const response = await getUsers();
+    this.setState({
+      users: [...response.data],
+    });
   }
+  signUpSubmit = () => {
+    this.setState({
+      showSignin: false,
+      showLogin: true,
+      snackSuccessfullRegistration: true,
+    });
+  };
+  signInSubmit = async () => {
+    try {
+      const response = await getUsers();
+      console.log(response.data);
+      this.setState({
+        users: [...response.data],
+      });
+    } catch (e) {
+      const {
+        response: { status },
+      } = e;
+      if (status === 403) {
+        this.setState({
+          snackBlocked: true,
+        });
+        return;
+      }
+    }
+
+    this.setState({
+      isAuthorised: true,
+      showLoginPopUp: false,
+      snackSuccessfullLogin: true,
+    });
+  };
   handleClickToSignIn = () => {
     this.setState({
       showSignin: true,
@@ -57,18 +100,95 @@ class App extends React.Component<unknown, AppStateType> {
     });
   };
   handleLogout = () => {
+    localStorage.clear();
     this.setState({
       isAuthorised: false,
     });
   };
-  handleClickBlock = () => {
-    console.log('Block');
+  handleClickBlock = async () => {
+    try {
+      await blockUsers(this.state.selectedIds);
+      this.setState({
+        snackBan: true,
+      });
+    } catch (e) {
+      const {
+        response: { status },
+      } = e;
+      if (status == 405) {
+        localStorage.clear();
+        this.setState({
+          isAuthorised: false,
+        });
+      }
+    }
+
+    const usersData = await getUsers();
+    this.setState({
+      users: [...usersData.data],
+    });
   };
-  handleClickUnblock = () => {
-    console.log('UnBlock');
+  handleClickUnblock = async () => {
+    await unblockUsers(this.state.selectedIds);
+    this.setState({
+      snackUnban: true,
+    });
+    const usersData = await getUsers();
+    this.setState({
+      users: [...usersData.data],
+    });
   };
-  handleClickDelete = () => {
-    console.log('Delete');
+  handleClickDelete = async () => {
+    try {
+      await deleteUsers(this.state.selectedIds);
+      this.setState({
+        snackDelete: true,
+      });
+    } catch (e) {
+      const {
+        response: { status },
+      } = e;
+      if (status == 405) {
+        localStorage.clear();
+        this.setState({
+          isAuthorised: false,
+        });
+      }
+    }
+    const usersData = await getUsers();
+    this.setState({
+      users: [...usersData.data],
+    });
+  };
+  closeSnackBar = () => {
+    this.setState({
+      snackSuccessfullRegistration: false,
+    });
+  };
+  closeSnackLogin = () => {
+    this.setState({
+      snackSuccessfullLogin: false,
+    });
+  };
+  closeSnackBlocked = () => {
+    this.setState({
+      snackBlocked: false,
+    });
+  };
+  closeSnackBan = () => {
+    this.setState({
+      snackBan: false,
+    });
+  };
+  closeSnackUnban = () => {
+    this.setState({
+      snackUnban: false,
+    });
+  };
+  closeSnackDelete = () => {
+    this.setState({
+      snackDelete: false,
+    });
   };
   handleClickAdd = () => {
     this.generateUser();
@@ -102,8 +222,18 @@ class App extends React.Component<unknown, AppStateType> {
         />
         {this.state.showLoginPopUp && (
           <>
-            {this.state.showLogin && <SignIn handleClickLink={this.handleClickToSignIn} />}
-            {this.state.showSignin && <SignUp handleClickLink={this.handleClickToLogin} />}
+            {this.state.showLogin && (
+              <SignIn
+                handleClickLink={this.handleClickToSignIn}
+                handleSubmitSignIn={this.signInSubmit}
+              />
+            )}
+            {this.state.showSignin && (
+              <SignUp
+                handleClickLink={this.handleClickToLogin}
+                handleSubmitSignUp={this.signUpSubmit}
+              />
+            )}
           </>
         )}
         {this.state.isAuthorised && (
@@ -123,17 +253,29 @@ class App extends React.Component<unknown, AppStateType> {
                 }}
                 loading={this.state.isLoading}
                 pageSize={40}
+                getRowId={(row) => row._id}
                 autoHeight={true}
                 rowsPerPageOptions={[10]}
                 checkboxSelection
                 onSelectionModelChange={(itm) => {
                   const checked = itm.toString().split(',');
-                  this.state.users.filter((item) => checked.includes(item.id.toString()));
+                  this.setState({
+                    selectedIds: [...checked],
+                  });
                 }}
               />
             </div>
           </>
         )}
+        <Snack isOpen={this.state.snackSuccessfullRegistration} handleClose={this.closeSnackBar} />
+        <SnackBlocked isOpen={this.state.snackBlocked} handleClose={this.closeSnackBlocked} />
+        <SnackBan isOpen={this.state.snackBan} handleClose={this.closeSnackBan} />
+        <SnackUnban isOpen={this.state.snackUnban} handleClose={this.closeSnackUnban} />
+        <SnackDelete isOpen={this.state.snackDelete} handleClose={this.closeSnackDelete} />
+        <SnackLoginYes
+          isOpen={this.state.snackSuccessfullLogin}
+          handleClose={this.closeSnackLogin}
+        />
       </div>
     );
   }
