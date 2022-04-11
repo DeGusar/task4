@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { RequestLoginType } from '../types/types';
 
-const url = 'https://task4-authorization.herokuapp.com/auth';
+/* const url = 'https://task4-authorization.herokuapp.com/auth'; */
+const url = 'http://localhost:5000/auth';
 export type requestSignUpType = {
   firstName: string;
   lastName: string;

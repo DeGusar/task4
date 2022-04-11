@@ -46,10 +46,23 @@ class App extends React.Component<unknown, AppStateType> {
     };
   }
   async componentDidMount() {
-    const response = await getUsers();
-    this.setState({
-      users: [...response.data],
-    });
+    try {
+      const response = await getUsers();
+      this.setState({
+        users: [...response.data],
+      });
+    } catch (e) {
+      const {
+        response: { status },
+      } = e;
+      if (status === 411) {
+        localStorage.clear();
+        this.setState({
+          isAuthorised: false,
+          emailUser: '',
+        });
+      }
+    }
   }
   signUpSubmit = () => {
     this.setState({
